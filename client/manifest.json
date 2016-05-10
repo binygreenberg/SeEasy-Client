@@ -1,0 +1,13 @@
+{
+  "manifest_version": 2,
+  "name": "Tree Extention",
+  "version": "0.1",
+  "permissions": ["tabs","history","webNavigation","storage"],
+  "background":{
+     "persistent": false,
+     "scripts":["background.js"]
+  },
+  "browser_action": {
+    "default_icon": "graph.png",
+    "default_popup": "popup.html"}
+}
