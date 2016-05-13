@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Tree Extention",
   "version": "0.1",
-  "permissions": ["tabs","history","webNavigation","storage"],
+  "permissions": ["tabs","history","webNavigation","storage","http://localhost:8000/rec/"],
   "background":{
      "persistent": false,
      "scripts":["background.js"]

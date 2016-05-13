@@ -6,6 +6,19 @@ var currentTabTree;
 var activeWindow;
 var dontAddTheseUrl = ["chrome://newtab/","http://localhost:8080/"];
 
+var typeEnum = {
+	RECOMMENDED: "recommended",
+	LINK: "link",
+	TYPED: "typed"
+}
+
+function node(name, parent, type) {
+	this.name = name;
+	this.parent = parent;
+	this.type = type || typeEnum.LINK;
+}
+
+
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
 	chrome.storage.sync.remove([String(activeWindow * tabId)], function(storage) {});
 });
@@ -22,12 +35,17 @@ function checkShouldAddUrl(url){
 	return (dontAddTheseUrl.indexOf(url) == -1) ? true : false;
 }
 
+function handleStateChange(){
+	if (xhttp.readyState == 4 && xhttp.status == 200) {
+    	document.getElementById("demo").innerHTML = xhttp.responseText;
+  	}
+}
+
 function addVisitToTree(tabId, changeInfo) {
 	if (currentTabTree && previousUrls) {
 		var lastUrlVisitedOnThisTab = previousUrls["p" + tabId.toString()] || "null";
-
-		var newVisit = {"name" : changeInfo.url, "parent": lastUrlVisitedOnThisTab};
-		var oppositeDirection = {"name" : lastUrlVisitedOnThisTab, "parent": changeInfo.url};
+		var newVisit = new node(changeInfo.url, lastUrlVisitedOnThisTab);
+		var oppositeDirection = new node(lastUrlVisitedOnThisTab, changeInfo.url);
 
 		var arrayContainsOppositeDirection = false;
 		var sitePathAlreadyTraversed = false;
@@ -41,6 +59,8 @@ function addVisitToTree(tabId, changeInfo) {
 
 		if (!arrayContainsOppositeDirection && !sitePathAlreadyTraversed) {
 	  		currentTabTree.push(newVisit);
+	  		//for now ajax to server and log the three most similar domains to console
+	  		addSimilalURLs_(newVisit.name);
 		}
 
 	  	previousUrls["p" + tabId.toString()] = changeInfo.url;
@@ -69,7 +89,6 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 });
 
 
-
 function onMessageListener_ (message, sender, sendResponse) {
 	if (message.type === 'getJSON') {
 		if (!currentTabTree) {
@@ -91,4 +110,34 @@ chrome.windows.onFocusChanged.addListener(function (windowId) {
 
 chrome.runtime.onMessage.addListener(onMessageListener_);
 
+function addSimilalURLs_(url){
+	var urlDomain = extractDomain_(url)
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", 'http://localhost:8000/rec/api/'+urlDomain, true);
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState == 4) {
+			var json = JSON.parse(xhr.responseText);
+			for (var key in json) {
+	       		if (json.hasOwnProperty(key)) {
+	          		console.log(json[key].pk, json[key].fields.category);
+	       		}
+	    	}
+		}
+	}
+	xhr.send();
+}
+function extractDomain_(url) {
+    var domain;
+    //find & remove protocol (http, ftp, etc.) and get domain
+    if (url.indexOf("://") > -1) {
+        domain = url.split('/')[2];
+    }
+    else {
+        domain = url.split('/')[0];
+    }
 
+    //find & remove port number
+    domain = domain.split(':')[0];
+
+    return domain;
+}
