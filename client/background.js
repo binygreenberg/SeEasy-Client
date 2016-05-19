@@ -24,6 +24,7 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
 });
 
 chrome.tabs.onActivated.addListener(function (activeInfo) {
+	console.log('tab changed to tab' + String(activeInfo.tabId));
 	chrome.storage.sync.get({[String(activeWindow * activeInfo.tabId)]: [],'previousUrls': {}}, function (storage) {
 		previousUrls = storage.previousUrls || {};
 		currentTabTree = storage[String(activeWindow * activeInfo.tabId)] || [];
@@ -61,13 +62,14 @@ function addVisitToTree(tabId, changeInfo) {
 	  		currentTabTree.push(newVisit);
 	  		//for now ajax to server and log the three most similar domains to console
 	  		addSimilalURLs_(newVisit.name);
+	  		console.log('added to list: ' + JSON.stringify(currentTabTree));
 		}
 
 	  	previousUrls["p" + tabId.toString()] = changeInfo.url;
 
 	    chrome.storage.sync.set({[String(activeWindow * tabId)]: currentTabTree, 'previousUrls': previousUrls}, function() {
 	          // Notify that we saved.
-	          console.log('changes saved');
+	          console.log('changes saved' + JSON.stringify(currentTabTree));
 	    });
 	}
 }
@@ -92,8 +94,10 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 function onMessageListener_ (message, sender, sendResponse) {
 	if (message.type === 'getJSON') {
 		if (!currentTabTree) {
-			chrome.storage.sync.get({[activeWindow * activeTab]: []}, function (obj) {
+			console.log('getting json for tab ' + String(activeTab));
+			chrome.storage.sync.get({[String(activeWindow * activeTab)]: []}, function (obj) {
 			    currentTabTree = obj || [];
+			    console.log(JSON.stringify({'result':currentTabTree}));
 			    sendResponse({result:currentTabTree});
 			});
 		} else {
