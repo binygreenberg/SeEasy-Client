@@ -29,5 +29,5 @@ chrome.runtime.sendMessage(
 
     root = treeData[0];
     console.log("callback function root", root);
-    update(root);
+    setListRoot(root);
 });

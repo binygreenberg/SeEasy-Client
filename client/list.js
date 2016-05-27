@@ -5,7 +5,8 @@ var margin = {top: 30, right: 20, bottom: 30, left: 20},
     barWidth = width * .8;
 
 var i = 0,
-    duration = 400;
+    duration = 400,
+    root;
     
 var tree = d3.layout.tree()
     .nodeSize([0, 20]);
@@ -18,11 +19,17 @@ var svg = d3.select("body").append("svg")
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+function setListRoot(flare){
+  flare.x0 = 0;
+  flare.y0 = 0;
+  update(root = flare);
+}
+
 
 function update(source) {
 
   // Compute the flattened node list. TODO use d3.layout.hierarchy.
-  var nodes = tree.nodes(source);
+  var nodes = tree.nodes(root);
 
   var height = Math.max(500, nodes.length * barHeight + margin.top + margin.bottom);
 
@@ -48,6 +55,9 @@ function update(source) {
       .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
       .style("opacity", 1e-6);
 
+
+
+
   // Enter any new nodes at the parent's previous position.
   nodeEnter.append("rect")
       .attr("y", -barHeight / 2)
@@ -59,7 +69,9 @@ function update(source) {
   nodeEnter.append("text")
       .attr("dy", 3.5)
       .attr("dx", 5.5)
-      .text(function(d) { return d.name; });
+      .attr("xlink:href", function(d) { return d.name; })
+      .text(function(d) { return d.name; })
+      .on("click",openUrlClick);
 
   // Transition nodes to their new position.
   nodeEnter.transition()
@@ -115,6 +127,10 @@ function update(source) {
     d.x0 = d.x;
     d.y0 = d.y;
   });
+}
+
+function openUrlClick(d){
+    chrome.tabs.create( { url: d.name} );
 }
 
 // Toggle children on click.

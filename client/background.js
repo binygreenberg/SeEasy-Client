@@ -61,8 +61,8 @@ function addVisitToTree(tabId, changeInfo) {
 		if (!arrayContainsOppositeDirection && !sitePathAlreadyTraversed) {
 	  		currentTabTree.push(newVisit);
 	  		//for now ajax to server and log the three most similar domains to console
-	  		addSimilalURLs_(newVisit.name);
-	  		console.log('added to list: ' + JSON.stringify(currentTabTree));
+	  		//addSimilalURLs_(newVisit.name);
+	  		//console.log('added to list: ' + JSON.stringify(currentTabTree));
 		}
 
 	  	previousUrls["p" + tabId.toString()] = changeInfo.url;
