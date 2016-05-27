@@ -11,10 +11,11 @@ var typeEnum = {
 	TYPED: "typed"
 }
 
-function node(name, parent, type) {
+function node(name, parent, title, type) {
 	this.name = name;
 	this.parent = parent;
 	this.type = type || typeEnum.LINK;
+	this.title = title;
 }
 
 
@@ -43,18 +44,17 @@ function handleStateChange(){
   	}
 }
 
-function addVisitToTree(tabId, changeInfo) {
+function addVisitToTree(tabId, changeInfo, tab) {
 	if (currentTabTree && previousUrls) {
 		var lastUrlVisitedOnThisTab = previousUrls["p" + tabId.toString()] || "null";
-		var newVisit = new node(changeInfo.url, lastUrlVisitedOnThisTab);
-		var oppositeDirection = new node(lastUrlVisitedOnThisTab, changeInfo.url);
+		var newVisit = new node(changeInfo.url, lastUrlVisitedOnThisTab, tab.title);
 
 		var arrayContainsOppositeDirection = false;
 		var sitePathAlreadyTraversed = false;
 		currentTabTree.forEach(function (record) {
-			if (JSON.stringify(record) === JSON.stringify(oppositeDirection)) {
+			if (record.name === newVisit.parent && record.parent === newVisit.name) {
 				arrayContainsOppositeDirection = true;
-			} else if (JSON.stringify(record) === JSON.stringify(newVisit)) {
+			} else if (record.name === newVisit.name && record.parent === newVisit.parent) {
 				sitePathAlreadyTraversed = true;
 			}
 		});
@@ -82,10 +82,10 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     		previousUrls = storage.previousUrls || {};
     		currentTabTree = storage[String(tabId)] || [];
     		activeTab = tabId;
-    		addVisitToTree(tabId, changeInfo);
+    		addVisitToTree(tabId, changeInfo, tab);
     	});
   	} else {
-  		addVisitToTree(tabId, changeInfo);
+		addVisitToTree(tabId, changeInfo, tab);
   	}
   }
 });
@@ -93,12 +93,12 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
 function onMessageListener_ (message, sender, sendResponse) {
 	if (message.type === 'getJSON') {
-		if (!(currentTabTree["result"])) {
+		if (!currentTabTree) {
 			console.log('getting json for tab ' + String(activeTab));
 			chrome.storage.sync.get({[String(activeTab)]: []}, function (obj) {
-			    currentTabTree = obj || [];
+			    currentTabTree = obj[activeTab] || [];
 			    console.log(JSON.stringify({'result':currentTabTree}));
-			    sendResponse({result:currentTabTree});
+			    sendResponse({'result':currentTabTree});
 			});
 		} else {
 			console.log(JSON.stringify({'result':currentTabTree}));

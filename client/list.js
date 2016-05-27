@@ -69,8 +69,7 @@ function update(source) {
   nodeEnter.append("text")
       .attr("dy", 3.5)
       .attr("dx", 5.5)
-      .attr("xlink:href", function(d) { return d.name; })
-      .text(function(d) { return d.name; })
+      .text(function(d) { return d.title; })
       .on("click",openUrlClick);
 
   // Transition nodes to their new position.
