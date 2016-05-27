@@ -3,7 +3,6 @@
 var activeTab = 0;
 var previousUrls;
 var currentTabTree;
-var activeWindow;
 var dontAddTheseUrl = ["chrome://newtab/","http://localhost:8080/"];
 
 var typeEnum = {
@@ -20,14 +19,16 @@ function node(name, parent, type) {
 
 
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-	chrome.storage.sync.remove([String(activeWindow * tabId)], function(storage) {});
+	delete previousUrls["p" + tabId.toString()];
+	chrome.storage.sync.remove([String(tabId)], function(storage) {});
+
 });
 
 chrome.tabs.onActivated.addListener(function (activeInfo) {
 	console.log('tab changed to tab' + String(activeInfo.tabId));
-	chrome.storage.sync.get({[String(activeWindow * activeInfo.tabId)]: [],'previousUrls': {}}, function (storage) {
+	chrome.storage.sync.get({[String(activeInfo.tabId)]: [],'previousUrls': {}}, function (storage) {
 		previousUrls = storage.previousUrls || {};
-		currentTabTree = storage[String(activeWindow * activeInfo.tabId)] || [];
+		currentTabTree = storage[String(activeInfo.tabId)] || [];
 		activeTab = activeInfo.tabId;
 	});
 });
@@ -66,8 +67,7 @@ function addVisitToTree(tabId, changeInfo) {
 		}
 
 	  	previousUrls["p" + tabId.toString()] = changeInfo.url;
-
-	    chrome.storage.sync.set({[String(activeWindow * tabId)]: currentTabTree, 'previousUrls': previousUrls}, function() {
+	    chrome.storage.sync.set({[String(tabId)]: currentTabTree, 'previousUrls': previousUrls}, function() {
 	          // Notify that we saved.
 	          console.log('changes saved' + JSON.stringify(currentTabTree));
 	    });
@@ -78,9 +78,9 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
   if (changeInfo.url && checkShouldAddUrl(changeInfo.url)) {
   	if (!currentTabTree || !previousUrls || activeTab !== tabId) {
-  		chrome.storage.sync.get({[String(activeWindow * tabId)]: [],'previousUrls': {}}, function (storage) {
+  		chrome.storage.sync.get({[String(tabId)]: [],'previousUrls': {}}, function (storage) {
     		previousUrls = storage.previousUrls || {};
-    		currentTabTree = storage[String(activeWindow * tabId)] || [];
+    		currentTabTree = storage[String(tabId)] || [];
     		activeTab = tabId;
     		addVisitToTree(tabId, changeInfo);
     	});
@@ -93,9 +93,9 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
 function onMessageListener_ (message, sender, sendResponse) {
 	if (message.type === 'getJSON') {
-		if (!currentTabTree) {
+		if (!(currentTabTree["result"])) {
 			console.log('getting json for tab ' + String(activeTab));
-			chrome.storage.sync.get({[String(activeWindow * activeTab)]: []}, function (obj) {
+			chrome.storage.sync.get({[String(activeTab)]: []}, function (obj) {
 			    currentTabTree = obj || [];
 			    console.log(JSON.stringify({'result':currentTabTree}));
 			    sendResponse({result:currentTabTree});
@@ -107,10 +107,6 @@ function onMessageListener_ (message, sender, sendResponse) {
 	} else 
 		sendResponse({});
 }
-
-chrome.windows.onFocusChanged.addListener(function (windowId) {
-	activeWindow = windowId;
-});
 
 chrome.runtime.onMessage.addListener(onMessageListener_);
 
