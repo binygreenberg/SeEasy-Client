@@ -3,7 +3,7 @@
 var activeTab = 0;
 var previousUrls;
 var currentTabTree;
-var dontAddTheseUrl = ["chrome://newtab/","http://localhost:8080/"];
+var dontAddTheseUrl = [/chrome:\/\/newtab/,/http:\/\/localhost/,/chrome:\/\/extensions/];
 
 var typeEnum = {
 	RECOMMENDED: "recommended",
@@ -35,7 +35,10 @@ chrome.tabs.onActivated.addListener(function (activeInfo) {
 });
 
 function checkShouldAddUrl(url){
-	return (dontAddTheseUrl.indexOf(url) == -1) ? true : false;
+	var urlIsInList = dontAddTheseUrl.some(function(e1) {
+  		return e1.test(url);
+	});
+	return !urlIsInList;
 }
 
 function handleStateChange(){
@@ -62,8 +65,8 @@ function addVisitToTree(tabId, changeInfo, tab) {
 		if (!arrayContainsOppositeDirection && !sitePathAlreadyTraversed) {
 	  		currentTabTree.push(newVisit);
 	  		//for now ajax to server and log the three most similar domains to console
-	  		//addSimilalURLs_(newVisit.name);
-	  		//console.log('added to list: ' + JSON.stringify(currentTabTree));
+	  		getSimilalURLs_(newVisit.name);
+	  		console.log('added to list: ' + JSON.stringify(currentTabTree));
 		}
 
 	  	previousUrls["p" + tabId.toString()] = changeInfo.url;
@@ -75,8 +78,8 @@ function addVisitToTree(tabId, changeInfo, tab) {
 }
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-
   if (changeInfo.url && checkShouldAddUrl(changeInfo.url)) {
+  	postVisitedURLs_(changeInfo.url);
   	if (!currentTabTree || !previousUrls || activeTab !== tabId) {
   		chrome.storage.sync.get({[String(tabId)]: [],'previousUrls': {}}, function (storage) {
     		previousUrls = storage.previousUrls || {};
@@ -110,22 +113,39 @@ function onMessageListener_ (message, sender, sendResponse) {
 
 chrome.runtime.onMessage.addListener(onMessageListener_);
 
-function addSimilalURLs_(url){
+function getSimilalURLs_(url){
 	var urlDomain = extractDomain_(url)
 	var xhr = new XMLHttpRequest();
 	xhr.open("GET", 'http://localhost:8000/rec/api/'+urlDomain, true);
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == 4) {
 			var json = JSON.parse(xhr.responseText);
-			for (var key in json) {
-	       		if (json.hasOwnProperty(key)) {
-	          		console.log(json[key].pk, json[key].fields.category);
-	       		}
+			if (json != 'null') {
+				for (var key in json) {
+		       		if (json.hasOwnProperty(key)) {
+		          		console.log('return value from GET' ,json[key].pk, json[key].fields.category);
+		       		}
+		    	}
+	    	} else {
+	    		console.log('return value from GET null');
 	    	}
 		}
 	}
 	xhr.send();
 }
+
+function postVisitedURLs_(url){
+	var urlDomain = extractDomain_(url)
+	var xhr = new XMLHttpRequest();
+	xhr.open("POST", 'http://localhost:8000/rec/api/' + urlDomain + '/', true);
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState == 4) {
+			console.log('return value from POST');
+	    }
+	}
+	xhr.send();
+}
+
 function extractDomain_(url) {
     var domain;
     //find & remove protocol (http, ftp, etc.) and get domain
