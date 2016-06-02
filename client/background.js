@@ -69,14 +69,16 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
 
 chrome.tabs.onActivated.addListener(function (activeInfo) {
 	console.log('tab changed to tab' + String(activeInfo.tabId));
-	chrome.storage.sync.get({'tabMap': {}}, function (storage) {
-		var mappedTab = storage.tabMap[activeInfo.tabId]
-		chrome.storage.sync.get({[String(mappedTab)]: [],'previousUrls': {}}, function (storage) {
-			previousUrls = storage.previousUrls || {};
-			currentTabTree = storage[String(mappedTab)] || [];
-			activeTab = mappedTab;
+	if (!isNewTab) {
+		chrome.storage.sync.get({'tabMap': {}}, function (storage) {
+			var mappedTab = storage.tabMap[activeInfo.tabId]
+			chrome.storage.sync.get({[String(mappedTab)]: [],'previousUrls': {}}, function (storage) {
+				previousUrls = storage.previousUrls || {};
+				currentTabTree = storage[String(mappedTab)] || [];
+				activeTab = mappedTab;
+			});
 		});
-	});
+	}
 });
 
 function checkShouldAddUrl(url){
