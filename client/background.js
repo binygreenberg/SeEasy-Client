@@ -196,7 +196,7 @@ chrome.runtime.onMessage.addListener(onMessageListener_);
 function getSimilalURLs_(url){
 	var urlDomain = extractDomain_(url)
 	var xhr = new XMLHttpRequest();
-	xhr.open("GET", 'http://localhost:8000/rec/api/'+urlDomain, true);
+	xhr.open("GET", 'http://seeasy.herokuapp.com/rec/api/'+urlDomain, true);
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == 4) {
 			var json = JSON.parse(xhr.responseText);
@@ -217,7 +217,7 @@ function getSimilalURLs_(url){
 function postVisitedURLs_(url){
 	var urlDomain = extractDomain_(url)
 	var xhr = new XMLHttpRequest();
-	xhr.open("POST", 'http://localhost:8000/rec/api/' + urlDomain + '/', true);
+	xhr.open("POST", 'http://seeasy.herokuapp.com/rec/api/' + urlDomain + '/', true);
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == 4) {
 			console.log('return value from POST');
