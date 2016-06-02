@@ -36,14 +36,14 @@ chrome.tabs.onCreated.addListener(function(tab) {
 });
 
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-	if (!previousUrls) {
-		chrome.storage.sync.get({'previousUrls': {}}, function (storage) {
-			previousUrls = storage.previousUrls || {};
-			delete previousUrls["p" + tabId.toString()];
-		});
-	} else {
+	chrome.storage.sync.get({'previousUrls': {}, 'tabMap': {}}, function (storage) {
+		previousUrls = storage.previousUrls || {};
 		delete previousUrls["p" + tabId.toString()];
-	}
+		delete storage.tabMap[tabId];
+		chrome.storage.sync.set({'tabMap': storage.tabMap, 'previousUrls': previousUrls}, function() {
+			console.log('tabMap is now: ' + JSON.stringify(tabMap));
+		});
+	});
 	chrome.storage.sync.remove([String(tabId)], function(storage) {});
 	if (Object.keys(previousUrls).length > 30) {
 		chrome.tabs.query({}, function(allTabs) {
@@ -157,7 +157,11 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
 		console.log("This is the tabMap in onCommitted : " + JSON.stringify(tabMap));
 		console.log("In onCommitted the currentTabTree is:" + JSON.stringify(currentTabTree));
 		chrome.storage.sync.get({'tabMap': {}}, function (storage) {
-			storage.tabMap[openedTab.id] = openedTab.openerTabId;
+			var parentTabId = openedTab.openerTabId;
+			while (storage.tabMap[parentTabId] !== parentTabId) {
+				parentTabId = storage.tabMap[parentTabId];
+			}	
+			storage.tabMap[openedTab.id] = parentTabId;
 			chrome.storage.sync.set({'tabMap': storage.tabMap}, function() {
 		    	var lastUrlVisitedOnThisTab = previousUrls["p" + openedTab.openerTabId.toString()] || "null";
 				addVisitToTree(openedTab.id, openedTab, openedTab, currentTabTree, lastUrlVisitedOnThisTab);
