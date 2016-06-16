@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html>
  <body>
-
     <meta charset="utf-8">
 
     <title>Tree Example</title>
 
     <style type="text/css">
 	
+   body {
+            width: 800px;
+            height: 600px;
+            overflow: hidden;
+         }
+
 	.node {
 		cursor: pointer;
 	}
@@ -37,11 +42,13 @@
 	  stroke-width: 2px;
 	}
 </style>
+<button id='tree' type="button">Tree Graph</button>
+<button id='graph' type="button">List Graph</button>
 <!-- load the d3.js library -->	
-<!--this is a test-->
 <script src="d3.v3.min.js"></script>
 <!--<script src="tree.js"></script>-->
 <script src="list.js"></script>
+<script src='tree.js'></script>
 <script src="callback.js"></script>
   </body>
 </html>

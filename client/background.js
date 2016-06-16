@@ -3,7 +3,6 @@
 var activeTab = 0;
 var previousUrls;
 var currentTabTree;
-var dontAddTheseUrl = ["chrome://newtab/","http://localhost:8080/"];
 var isNewTab = false;
 var openedTab = null;
 var tabMap = {};
@@ -94,7 +93,7 @@ function handleStateChange(){
   	}
 }
 
-function addVisitToTree(tabId, changeInfo, tab, tabTree = currentTabTree, lastUrlVisitedOnThisTab = "null") {
+function addVisitToTree(tabId, changeInfo, tab, tabTree, lastUrlVisitedOnThisTab) {
 	if (tabTree && previousUrls) {
 		var newVisit = new node(changeInfo.url, lastUrlVisitedOnThisTab, (tab.title || changeInfo.url));
 
@@ -110,8 +109,11 @@ function addVisitToTree(tabId, changeInfo, tab, tabTree = currentTabTree, lastUr
 
 		if (!arrayContainsOppositeDirection && !sitePathAlreadyTraversed) {
 	  		tabTree.push(newVisit);
-	  		//for now ajax to server and log the three most similar domains to console
-	  		getSimilalURLs_(newVisit.name);
+	  		//for now ajax request to server and log the three most similar domains to console
+	  		setTimeout(function(){
+	  			getSimilalURLs_(newVisit.name, tabTree,lastUrlVisitedOnThisTab,tab.title);
+			}, 15000);
+
 	  		console.log('added to list: ' + JSON.stringify(currentTabTree));
 		}
 
@@ -139,10 +141,14 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 	  		chrome.storage.sync.get({[String(mappedTab)]: [],'previousUrls': {}}, function (storage) {
 	    		previousUrls = storage.previousUrls || {};
 	    		currentTabTree = storage[String(mappedTab)] || [];
-	    		console.log("Had to reload the data from scratch and it is: " + JSON.stringify(currentTabTree));
+	    		//console.log("Had to reload the data from scratch and it is: " + JSON.stringify(currentTabTree));
 	    		activeTab = tabId;
 	    		var lastUrlVisitedOnThisTab = previousUrls["p" + tabId.toString()] || "null";
 	    		addVisitToTree(tabId, changeInfo, tab, currentTabTree, lastUrlVisitedOnThisTab);
+	    		//send the edge to server
+	    		if (lastUrlVisitedOnThisTab){
+	    			postEdges_(changeInfo.url,lastUrlVisitedOnThisTab);
+	    		}
 	    	});
 	    });
   	} else {
@@ -189,23 +195,28 @@ function onMessageListener_ (message, sender, sendResponse) {
 			console.log(JSON.stringify({'result':currentTabTree}));
 			sendResponse({'result':currentTabTree});
 		} 
-	} else 
+	} else if (message.type === 'getDummyData'){
 		sendResponse({});
+	}
+	else sendResponse({});
+
 }
 
 chrome.runtime.onMessage.addListener(onMessageListener_);
 
-function getSimilalURLs_(url){
+function getSimilalURLs_(url,tabTree,lastUrlVisitedOnThisTab,tabTitle){
 	var urlDomain = extractDomain_(url)
 	var xhr = new XMLHttpRequest();
 	xhr.open("GET", 'http://seeasy.herokuapp.com/rec/website/'+urlDomain, true);
-	xhr.onreadystatechange = function() {
+	xhr.onreadystatechange = function(tabTree,lastUrlVisitedOnThisTab,tabTitle) {
 		if (xhr.readyState == 4) {
 			var json = JSON.parse(xhr.responseText);
 			if (json != 'null') {
 				for (var key in json) {
 		       		if (json.hasOwnProperty(key)) {
 		          		console.log('return value from GET' ,json[key].pk, json[key].fields.category);
+		       			// var newVisit = new node(json[key].pk, lastUrlVisitedOnThisTab, (tabTitle || json[key].pk));
+	    				// tabTree.push(newVisit);
 		       		}
 		    	}
 	    	} else {
@@ -215,6 +226,8 @@ function getSimilalURLs_(url){
 	}
 	xhr.send();
 }
+
+
 
 function postVisitedURLs_(url){
 	var urlDomain = extractDomain_(url)
@@ -226,6 +239,24 @@ function postVisitedURLs_(url){
 	    }
 	}
 	xhr.send();
+}
+
+function postEdges_(url,parentUrl){
+	url = 'www.facebook.com';
+	parentUrl = 'www.google.co.il'
+	if (parentUrl != 'null') {
+		var urlDomain = extractDomain_(url)
+		var parentUrlDomain = extractDomain_(parentUrl)
+		var xhr = new XMLHttpRequest();
+		xhr.open("POST", 'http://seeasy.herokuapp.com/rec/edges/' + parentUrlDomain + '&' + urlDomain +'/', true);
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4) {
+				console.log('return value from POST Edges');
+		    }
+		}
+		xhr.send();
+	}
 }
 
 function extractDomain_(url) {
@@ -243,6 +274,8 @@ function extractDomain_(url) {
 
     return domain;
 }
+
+
 
 /*
 		if (activeTab === openedTab.openerTabId) {
