@@ -242,9 +242,7 @@ function postVisitedURLs_(url){
 }
 
 function postEdges_(url,parentUrl){
-	url = 'www.facebook.com';
-	parentUrl = 'www.google.co.il'
-	if (parentUrl != 'null') {
+	if (parentUrl != 'null' && parentUrl) {
 		var urlDomain = extractDomain_(url)
 		var parentUrlDomain = extractDomain_(parentUrl)
 		var xhr = new XMLHttpRequest();
