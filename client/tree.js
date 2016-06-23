@@ -3,29 +3,32 @@
 // ************** Generate the tree diagram	 *****************
 
 var treeMargin = {top: 20, right: 120, bottom: 20, left: 120},
-	width = 960 - treeMargin.right - treeMargin.left,
-	height = 500 - treeMargin.top - treeMargin.bottom;
+	widthTree = 960 - treeMargin.right - treeMargin.left,
+	heightTree = 500 - treeMargin.top - treeMargin.bottom;
 	
 var iTree = 0,
 	durationTree = 750,
 	rootTree;
 
 var treeTree = d3.layout.tree()
-	.size([height, width]);
+	.size([heightTree, widthTree]);
 
 var diagonalTree = d3.svg.diagonal()
 	.projection(function(d) { return [d.y, d.x]; });
 
 var treeSvg = d3.select("body").append("svg")
-	.attr("width", width + treeMargin.right + treeMargin.left)
-	.attr("height", height + treeMargin.top + treeMargin.bottom)
+	.attr("width", widthTree + treeMargin.right + treeMargin.left)
+	.attr("heightTree", heightTree + treeMargin.top + treeMargin.bottom)
   .append("g")
 	.attr("transform", "translate(" + treeMargin.left + "," + treeMargin.top + ")");
  
 function setTreeRoot(flare){
   flare.x0 = 0;
   flare.y0 = 0;
-  updateTree(rootTree = flare);
+  rootTree = flare;
+  rootTree.x0 = heightTree / 2;
+  rootTree.y0 = 0;
+  updateTree(rootTree);
 }
 
 //d3.select(self.frameElement).style("height", "500px");
