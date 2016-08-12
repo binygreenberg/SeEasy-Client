@@ -1,3 +1,5 @@
+function setRadialRoot(flare){
+
 var diameter = 800;
 
 var margin = {top: 20, right: 120, bottom: 20, left: 120},
@@ -21,14 +23,10 @@ var svg = d3.select("body").append("svg")
   .append("g")
     .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
 
-root = pubs;
-root.x0 = height / 2;
-root.y0 = 0;
-
 //root.children.forEach(collapse); // start with all children collapsed
-update(root);
+//function update(root);
 
-d3.select(self.frameElement).style("height", "800px");
+//d3.select(self.frameElement).style("height", "800px");
 
 function update(source) {
 
@@ -128,7 +126,6 @@ function click(d) {
     d.children = d._children;
     d._children = null;
   }
-  
   update(d);
 }
 
@@ -139,4 +136,12 @@ function collapse(d) {
       d._children.forEach(collapse);
       d.children = null;
     }
+}
+
+
+root = flare;
+root.x0 = height / 2;
+root.y0 = 0;
+update(root)
+
 }
