@@ -1,5 +1,7 @@
 function setRadialRoot(flare){
 
+d3.select("svg").remove();
+
 var diameter = 800;
 
 var margin = {top: 20, right: 120, bottom: 20, left: 120},

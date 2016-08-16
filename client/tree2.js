@@ -129,7 +129,7 @@ function update(source) {
 }
 
 // Toggle children on click.
-function click(d) {
+function click(d) {t
   if (d.children) {
     d._children = d.children;
     d.children = null;
