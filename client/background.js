@@ -7,6 +7,7 @@ var isNewTab = false;
 var openedTab = null;
 var tabMap = {};
 var dontAddTheseUrl = [/chrome:\/\/newtab/,/http:\/\/localhost/,/chrome:\/\/extensions/];
+var lastUrl = "";
 
 var typeEnum = {
 	RECOMMENDED: "recommended",
@@ -133,6 +134,7 @@ function addVisitToTree(tabId, changeInfo, tab, tabTree, lastUrlVisitedOnThisTab
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (changeInfo.url && checkShouldAddUrl(changeInfo.url) && !isNewTab) {
   	postVisitedURLs_(changeInfo.url);
+  	lastUrl = changeInfo.url;
   	if (!currentTabTree || !previousUrls || activeTab !== tabId) {
   		chrome.storage.sync.get({'tabMap': {}}, function (storage) {
 	  		var mappedTab = storage.tabMap[tabId];
@@ -184,19 +186,32 @@ function onMessageListener_ (message, sender, sendResponse) {
 		if (!currentTabTree) {
 			console.log('getting json for tab ' + String(activeTab));
 			chrome.storage.sync.get({'tabMap': {}}, function (storage) {
-				var mappedTab = storage.tabMap[activeInfo.tabId]
+				var mappedTab = storage.tabMap[activeTab]
 				chrome.storage.sync.get({[String(mappedTab)]: []}, function (obj) {
 				    currentTabTree = obj[activeTab] || [];
 				    console.log(JSON.stringify({'result':currentTabTree}));
 				    sendResponse({'result':currentTabTree});
 				});
 			});
+			return true;
 		} else {
 			console.log(JSON.stringify({'result':currentTabTree}));
 			sendResponse({'result':currentTabTree});
 		} 
 	} else if (message.type === 'getDummyData'){
 		sendResponse({});
+	} else if (message.type === 'getRecommendations') {
+		var urlDomain = extractDomain_(lastUrl);
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", 'http://seeasy.herokuapp.com/rec/website/'+urlDomain, true);
+		xhr.onreadystatechange = function(tabTree,lastUrlVisitedOnThisTab,tabTitle) {
+			if (xhr.readyState == 4) {
+				var json = JSON.parse(xhr.responseText);
+				sendResponse(json);
+			}
+		}
+		xhr.send();
+		return true;
 	}
 	else sendResponse({});
 

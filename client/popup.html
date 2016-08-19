@@ -41,10 +41,21 @@
 	  stroke: #ccc;
 	  stroke-width: 2px;
 	}
+
+	#recommendationsContainer {
+	  position: fixed;
+	  bottom: 0;
+	}
+	
 </style>
 <button id='tree' type="button">Tree Graph</button>
 <button id='graph' type="button">List Graph</button>
 <button id='radial' type="button">List Graph</button>
+<div id='recommendationsContainer' style="color:#0000FF">
+  <a id='firstRecommendation' href="html_images.asp">HTML Images</a>
+  <a id='secondRecommendation' href="html_images.asp">HTML Images</a>
+  <a id='thirdRecommendation' href="html_images.asp">HTML Images</a>
+</div>
 
 <!-- load the d3.js library -->	
 <script src="d3.v3.min.js"></script>

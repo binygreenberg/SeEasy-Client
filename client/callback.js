@@ -33,6 +33,22 @@ function show(functionType){
 	    console.log("callback function rootTree", rootTree);
 	    functionType(rootTree);
 	});
+	chrome.runtime.sendMessage(
+    {'type': 'getRecommendations'},
+    function generateList(response) {
+	    var data = response;
+
+	    if (data != 'null') {
+			var index = 0;
+			for (var key in data) {
+	       		if (data.hasOwnProperty(key)) {
+	          		console.log('return value from GET' ,data[key].pk, data[key].fields.category);
+	       			document.getElementsByTagName('a')[index].setAttribute("href", data[key].pk);
+	       			document.getElementsByTagName('a')[index++].innerHTML = data[key].pk;
+	       		}
+	    	}
+		} 
+	});
 }
 
 show(setListRoot)
@@ -43,3 +59,4 @@ document.addEventListener('DOMContentLoaded', function () {
 	document.getElementById('graph').addEventListener('click', function(){show(setListRoot)});
 	document.getElementById('radial').addEventListener('click', function(){show(setRadialRoot)});
 });
+
