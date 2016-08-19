@@ -156,6 +156,9 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   	} else {
   		console.log("Data was already loaded and it is:" + JSON.stringify(currentTabTree));
   		var lastUrlVisitedOnThisTab = previousUrls["p" + tabId.toString()] || "null";
+  		if (lastUrlVisitedOnThisTab){
+			postEdges_(changeInfo.url,lastUrlVisitedOnThisTab);
+		}
 		addVisitToTree(tabId, changeInfo, tab, currentTabTree, lastUrlVisitedOnThisTab);
   	}
   }
