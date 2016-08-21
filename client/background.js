@@ -76,6 +76,7 @@ chrome.tabs.onActivated.addListener(function (activeInfo) {
 				previousUrls = storage.previousUrls || {};
 				currentTabTree = storage[String(mappedTab)] || [];
 				activeTab = mappedTab;
+				lastUrl = previousUrls["p" + activeTab.toString()];
 			});
 		});
 	}
@@ -186,6 +187,7 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
 
 function onMessageListener_ (message, sender, sendResponse) {
 	if (message.type === 'getJSON') {
+		getEdges_(lastUrl);
 		if (!currentTabTree) {
 			console.log('getting json for tab ' + String(activeTab));
 			chrome.storage.sync.get({'tabMap': {}}, function (storage) {
@@ -246,7 +248,6 @@ function getSimilalURLs_(url,tabTree,lastUrlVisitedOnThisTab,tabTitle){
 }
 
 
-
 function postVisitedURLs_(url){
 	var urlDomain = extractDomain_(url)
 	var xhr = new XMLHttpRequest();
@@ -261,10 +262,8 @@ function postVisitedURLs_(url){
 
 function postEdges_(url,parentUrl){
 	if (parentUrl != 'null' && parentUrl) {
-		var urlDomain = extractDomain_(url)
-		var parentUrlDomain = extractDomain_(parentUrl)
 		var xhr = new XMLHttpRequest();
-		xhr.open("POST", 'http://seeasy.herokuapp.com/rec/edges/' + parentUrlDomain + '&' + urlDomain +'/', true);
+		xhr.open("POST", 'http://seeasy.herokuapp.com/rec/edges/' + parentUrl + ' ' + url +'/', true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4) {
@@ -273,6 +272,18 @@ function postEdges_(url,parentUrl){
 		}
 		xhr.send();
 	}
+}
+
+function getEdges_(parentUrl) {
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", 'http://seeasy.herokuapp.com/rec/edges/' + parentUrl + ' notRelevant/', true);
+	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState == 4) {
+			console.log('return value from GET Edges');
+	    }
+	}
+	xhr.send();
 }
 
 function extractDomain_(url) {
