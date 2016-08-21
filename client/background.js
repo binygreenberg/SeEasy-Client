@@ -118,7 +118,7 @@ function addVisitToTree(tabId, changeInfo, tab, tabTree, lastUrlVisitedOnThisTab
 
 	  		console.log('added to list: ' + JSON.stringify(currentTabTree));
 		}
-
+		addEdges_(tabTree, changeInfo.url);
 	  	previousUrls["p" + tabId.toString()] = changeInfo.url;
 	  	chrome.storage.sync.get({'tabMap': {}}, function (storage) {
 		  	var mappedTab = storage.tabMap[tabId];
@@ -187,7 +187,6 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
 
 function onMessageListener_ (message, sender, sendResponse) {
 	if (message.type === 'getJSON') {
-		getEdges_(lastUrl);
 		if (!currentTabTree) {
 			console.log('getting json for tab ' + String(activeTab));
 			chrome.storage.sync.get({'tabMap': {}}, function (storage) {
@@ -274,13 +273,18 @@ function postEdges_(url,parentUrl){
 	}
 }
 
-function getEdges_(parentUrl) {
+function addEdges_(tabTree, parentUrl) {
 	var xhr = new XMLHttpRequest();
 	xhr.open("GET", 'http://seeasy.herokuapp.com/rec/edges/' + parentUrl + ' notRelevant/', true);
 	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == 4) {
 			console.log('return value from GET Edges');
+			var response = JSON.parse(xhr.responseText);
+			if (response.length > 0) {
+				//var newVisit = new node(changeInfo.url, lastUrlVisitedOnThisTab, (tab.title || changeInfo.url));
+				//tabTree.push(newVisit);
+			}
 	    }
 	}
 	xhr.send();
