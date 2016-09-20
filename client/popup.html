@@ -45,6 +45,14 @@
 	#recommendationsContainer {
 	  position: fixed;
 	  bottom: 0;
+	  border: 2px solid blue;
+	  border-radius: 5px;
+	  padding: 0px 10px 10px 10px;
+	}
+
+	a {
+		font-family: recursive;
+		font-size: 15px;
 	}
 	
 </style>
@@ -52,9 +60,12 @@
 <button id='graph' type="button">List Graph</button>
 <button id='radial' type="button">List Graph</button>
 <div id='recommendationsContainer' style="color:#0000FF">
-  <a id='firstRecommendation' href="html_images.asp">HTML Images</a>
-  <a id='secondRecommendation' href="html_images.asp">HTML Images</a>
-  <a id='thirdRecommendation' href="html_images.asp">HTML Images</a>
+	<h3 style="font-family: recursive">If you're on this page, you might wanna check out these as well:</h3>
+	<ul>
+		<li><a id='firstRecommendation' href="html_images.asp">HTML Images</a></li>
+	    <li><a id='secondRecommendation' href="html_images.asp">HTML Images</a></li>
+	    <li><a id='thirdRecommendation' href="html_images.asp">HTML Images</a></li>
+	</ul>
 </div>
 
 <!-- load the d3.js library -->	

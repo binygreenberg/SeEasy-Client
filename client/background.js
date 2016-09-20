@@ -101,24 +101,27 @@ function addVisitToTree(tabId, changeInfo, tab, tabTree, lastUrlVisitedOnThisTab
 
 		var arrayContainsOppositeDirection = false;
 		var sitePathAlreadyTraversed = false;
+		var falsePath = false;
 		tabTree.forEach(function (record) {
 			if (record.name === newVisit.parent && record.parent === newVisit.name) {
 				arrayContainsOppositeDirection = true;
 			} else if (record.name === newVisit.name && record.parent === newVisit.parent) {
 				sitePathAlreadyTraversed = true;
+			} else if (newVisit.name === newVisit.parent) {
+				falsePath = true;
 			}
 		});
 
-		if (!arrayContainsOppositeDirection && !sitePathAlreadyTraversed) {
+		if (!arrayContainsOppositeDirection && !sitePathAlreadyTraversed && !falsePath) {
 	  		tabTree.push(newVisit);
 	  		//for now ajax request to server and log the three most similar domains to console
-	  		setTimeout(function(){
+	  		//setTimeout(function(){
 	  			getSimilalURLs_(newVisit.name, tabTree,lastUrlVisitedOnThisTab,tab.title);
-			}, 15000);
+			//}, 15000);
 
 	  		console.log('added to list: ' + JSON.stringify(currentTabTree));
 		}
-		addEdges_(tabTree, changeInfo.url);
+		getEdges_(tabTree, changeInfo.url);
 	  	previousUrls["p" + tabId.toString()] = changeInfo.url;
 	  	chrome.storage.sync.get({'tabMap': {}}, function (storage) {
 		  	var mappedTab = storage.tabMap[tabId];
@@ -262,7 +265,7 @@ function postVisitedURLs_(url){
 function postEdges_(url,parentUrl){
 	if (parentUrl != 'null' && parentUrl) {
 		var xhr = new XMLHttpRequest();
-		xhr.open("POST", 'http://seeasy.herokuapp.com/rec/edges/' + parentUrl + ' ' + url +'/', true);
+		xhr.open("POST", 'http://seeasy.herokuapp.com/rec/edges/' + parentUrl + '{' + url +'/', true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4) {
@@ -273,17 +276,32 @@ function postEdges_(url,parentUrl){
 	}
 }
 
-function addEdges_(tabTree, parentUrl) {
+function slicePrefixAndSufix(url) {
+	if (url.slice(- 1) === '/') {
+		url = url.slice(0, -1);
+	}
+	if (url.slice(0, 7) == 'http://') {
+		url = url.slice(7, url.length);
+	} else if (url.slice(0, 8) == 'https://') {
+		url = url.slice(7, url.length);
+	}
+	return url;
+}
+
+function getEdges_(tabTree, parentUrl) {
 	var xhr = new XMLHttpRequest();
-	xhr.open("GET", 'http://seeasy.herokuapp.com/rec/edges/' + parentUrl + ' notRelevant/', true);
+	parentUrlStripped = slicePrefixAndSufix(parentUrl);
+	var targetUrl = 'http://seeasy.herokuapp.com/rec/edges/' + parentUrlStripped + '{notRelevant/';
+	xhr.open("GET", targetUrl, true);
 	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == 4) {
 			console.log('return value from GET Edges');
 			var response = JSON.parse(xhr.responseText);
 			if (response.length > 0) {
-				//var newVisit = new node(changeInfo.url, lastUrlVisitedOnThisTab, (tab.title || changeInfo.url));
-				//tabTree.push(newVisit);
+				var projectedUrl = response[0].fields.son;
+				var projectedVisit = new node(projectedUrl, parentUrl, projectedUrl);
+				tabTree.push(projectedVisit);
 			}
 	    }
 	}
