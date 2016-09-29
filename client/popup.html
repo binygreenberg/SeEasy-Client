@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
- <body>
+ <body style="background-color: #fcf5eb; overflow: auto; ">
     <meta charset="utf-8">
 
     <title>Tree Example</title>
@@ -45,22 +45,30 @@
 	#recommendationsContainer {
 	  position: fixed;
 	  bottom: 0;
-	  border: 2px solid blue;
+	  border: 2px solid steelblue;
 	  border-radius: 5px;
 	  padding: 0px 10px 10px 10px;
 	}
 
 	a {
-		font-family: recursive;
+		font-family: cursive;
 		font-size: 15px;
+		color: black;
+	}
+
+	button {
+		border-radius: 5px;
+		font-family: cursive;
+		background-color:#80ffbf;
+		border:2px solid #2eb82e;
 	}
 	
 </style>
 <button id='tree' type="button">Tree Graph</button>
 <button id='graph' type="button">List Graph</button>
 <button id='radial' type="button">List Graph</button>
-<div id='recommendationsContainer' style="color:#0000FF">
-	<h3 style="font-family: recursive">If you're on this page, you might wanna check out these as well:</h3>
+<div id='recommendationsContainer' style="background-color:#c6dbef">
+	<h3 style="font-family: cursive">If you're on this page, you might wanna check out these as well:</h3>
 	<ul>
 		<li><a id='firstRecommendation' href="html_images.asp">HTML Images</a></li>
 	    <li><a id='secondRecommendation' href="html_images.asp">HTML Images</a></li>
