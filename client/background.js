@@ -8,6 +8,7 @@ var openedTab = null;
 var tabMap = {};
 var dontAddTheseUrl = [/chrome:\/\/newtab/,/http:\/\/localhost/,/chrome:\/\/extensions/];
 var lastUrl = "";
+var newTabActivated = false;
 
 var typeEnum = {
 	RECOMMENDED: "recommended",
@@ -26,25 +27,105 @@ function node(name, parent, title, type) {
 chrome.tabs.onCreated.addListener(function(tab) {
 	isNewTab = true;
 	openedTab = tab;
+	console.log("the tab was created");
 	chrome.storage.sync.get({'tabMap': {}}, function (storage) {
 		storage.tabMap[tab.id] = tab.id;
 		chrome.storage.sync.set({'tabMap': storage.tabMap}, function() {
 	          // Notify that we saved.
-	          console.log('changes saved');
+	          console.log('tab map saved');
 	    });
 	});		
+});
+
+chrome.tabs.onActivated.addListener(function (activeInfo) {
+	console.log('tab changed to tab' + String(activeInfo.tabId));
+	if (!isNewTab) {
+		chrome.storage.sync.get({'tabMap': {}}, function (storage) {
+			console.log("getting the mapped tab");
+			var mappedTab = storage.tabMap[activeInfo.tabId];
+			if (mappedTab) {
+				chrome.storage.sync.get({[String(mappedTab)]: [],'previousUrls': {}}, function (storage) {
+					previousUrls = storage.previousUrls || {};
+					currentTabTree = storage[String(mappedTab)] || [];
+					activeTab = mappedTab;
+					lastUrl = previousUrls["p" + activeTab.toString()];
+				});
+			} else {
+				console.log("onActivated called at wrong time, tabMap comes back emtpy");
+				currentTabTree = [];
+				storage.tabMap[activeInfo.tabId] = activeInfo.tabId;
+				chrome.storage.sync.set({[String(activeInfo.tabId)]: currentTabTree, 'tabMap': storage.tabMap}, function() {
+			          console.log('onActivated; no tabMap result; new tabTree and TabMap and saved');
+			    });
+				chrome.storage.sync.get({'previousUrls': {}}, function (storage) {
+					previousUrls = storage.previousUrls || {};
+					previousUrls["p" + activeInfo.tabId.toString()] = "null";
+					chrome.storage.sync.set({'previousUrls': previousUrls}, function() {});
+				});
+				activeTab = activeInfo.tabId;
+				lastUrl = "null";
+			}
+		});
+	} else {
+		newTabActivated = true;
+	}
+});
+
+chrome.webNavigation.onCommitted.addListener(function(details) {
+	console.log("omCommited is called");
+	if (isNewTab && openedTab) {
+		if (details.transitionType === typeEnum.LINK || details.transitionType === typeEnum.AUTO_SUBFRAME) {
+			chrome.storage.sync.get({'tabMap': {}}, function (storage) {
+				var parentTabId = openedTab.openerTabId;
+				while (storage.tabMap[parentTabId] !== parentTabId) {
+					parentTabId = storage.tabMap[parentTabId];
+				}	
+				storage.tabMap[openedTab.id] = parentTabId;
+				chrome.storage.sync.set({'tabMap': storage.tabMap}, function() {
+			    	var lastUrlVisitedOnThisTab = previousUrls["p" + openedTab.openerTabId.toString()] || "null";
+					addVisitToTree(openedTab.id, openedTab, openedTab, currentTabTree, lastUrlVisitedOnThisTab);
+			    });
+			});
+		} else {
+			currentTabTree = [];
+			chrome.storage.sync.get({'previousUrls': {}}, function (storage) {
+				previousUrls = storage.previousUrls || {};
+				previousUrls["p" + openedTab.id.toString()] = "null";
+				chrome.storage.sync.set({'previousUrls': previousUrls}, function() {
+					console.log('tabMap is now: ' + JSON.stringify(tabMap));
+				});
+			});
+			if (newTabActivated) {
+				activeTab = openedTab.id;
+				lastUrl = "null";
+			}
+		}
+		newTabActivated = false; 
+		isNewTab = false;
+	}
 });
 
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
 	chrome.storage.sync.get({'previousUrls': {}, 'tabMap': {}}, function (storage) {
 		previousUrls = storage.previousUrls || {};
+		var tabTreeIndex = storage.tabMap[tabId];
 		delete previousUrls["p" + tabId.toString()];
 		delete storage.tabMap[tabId];
+
+		let mapHasAnotherRefernce = false;
+		for (entry in storage.tabMap) {
+			if (storage.tabMap[entry] == tabId){
+				mapHasAnotherRefernce = true;
+			}
+		}
+		if (!mapHasAnotherRefernce) {
+			chrome.storage.sync.remove([String(tabTreeIndex)], function(storage) {});
+		}
+
 		chrome.storage.sync.set({'tabMap': storage.tabMap, 'previousUrls': previousUrls}, function() {
 			console.log('tabMap is now: ' + JSON.stringify(tabMap));
 		});
 	});
-	chrome.storage.sync.remove([String(tabId)], function(storage) {});
 	if (Object.keys(previousUrls).length > 30) {
 		chrome.tabs.query({}, function(allTabs) {
 	    	for (var tabId in previousUrls) {
@@ -64,21 +145,6 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
 		          console.log('changes saved');
 		    });
 	    });
-	}
-});
-
-chrome.tabs.onActivated.addListener(function (activeInfo) {
-	console.log('tab changed to tab' + String(activeInfo.tabId));
-	if (!isNewTab) {
-		chrome.storage.sync.get({'tabMap': {}}, function (storage) {
-			var mappedTab = storage.tabMap[activeInfo.tabId]
-			chrome.storage.sync.get({[String(mappedTab)]: [],'previousUrls': {}}, function (storage) {
-				previousUrls = storage.previousUrls || {};
-				currentTabTree = storage[String(mappedTab)] || [];
-				activeTab = mappedTab;
-				lastUrl = previousUrls["p" + activeTab.toString()];
-			});
-		});
 	}
 });
 
@@ -168,29 +234,9 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   }
 });
 
-chrome.webNavigation.onCommitted.addListener(function(details) {
-	if (isNewTab && openedTab && (details.transitionType === typeEnum.LINK 
-		|| details.transitionType === typeEnum.AUTO_SUBFRAME)) {
-		console.log("This is the tabMap in onCommitted : " + JSON.stringify(tabMap));
-		console.log("In onCommitted the currentTabTree is:" + JSON.stringify(currentTabTree));
-		chrome.storage.sync.get({'tabMap': {}}, function (storage) {
-			var parentTabId = openedTab.openerTabId;
-			while (storage.tabMap[parentTabId] !== parentTabId) {
-				parentTabId = storage.tabMap[parentTabId];
-			}	
-			storage.tabMap[openedTab.id] = parentTabId;
-			chrome.storage.sync.set({'tabMap': storage.tabMap}, function() {
-		    	var lastUrlVisitedOnThisTab = previousUrls["p" + openedTab.openerTabId.toString()] || "null";
-				addVisitToTree(openedTab.id, openedTab, openedTab, currentTabTree, lastUrlVisitedOnThisTab);
-		    });
-		});
-	}
-	isNewTab = false;
-});
-
 function onMessageListener_ (message, sender, sendResponse) {
 	if (message.type === 'getJSON') {
-		if (!currentTabTree) {
+		if (!currentTabTree || currentTabTree.length === 0) { 
 			console.log('getting json for tab ' + String(activeTab));
 			chrome.storage.sync.get({'tabMap': {}}, function (storage) {
 				var mappedTab = storage.tabMap[activeTab]
@@ -208,16 +254,22 @@ function onMessageListener_ (message, sender, sendResponse) {
 	} else if (message.type === 'getDummyData'){
 		sendResponse({});
 	} else if (message.type === 'getRecommendations') {
-		var urlDomain = extractDomain_(lastUrl);
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", 'http://seeasy.herokuapp.com/rec/website/'+urlDomain, true);
-		xhr.onreadystatechange = function(tabTree,lastUrlVisitedOnThisTab,tabTitle) {
-			if (xhr.readyState == 4) {
-				var json = JSON.parse(xhr.responseText);
-				sendResponse(json);
+		chrome.storage.sync.get({'tabMap': {},'previousUrls': {}}, function (storage) {
+			var mappedTo = tabMap[activeTab];
+			lastUrl = previousUrls["p" + mappedTo];
+			if (lastUrl) {
+				var urlDomain = extractDomain_(lastUrl);
+				var xhr = new XMLHttpRequest();
+				xhr.open("GET", 'http://seeasy.herokuapp.com/rec/website/'+urlDomain, true);
+				xhr.onreadystatechange = function(tabTree,lastUrlVisitedOnThisTab,tabTitle) {
+					if (xhr.readyState == 4) {
+						var json = JSON.parse(xhr.responseText);
+						sendResponse(json);
+					}
+				}
+				xhr.send();
 			}
-		}
-		xhr.send();
+		});
 		return true;
 	}
 	else sendResponse({});
@@ -283,7 +335,7 @@ function slicePrefixAndSufix(url) {
 	if (url.slice(0, 7) == 'http://') {
 		url = url.slice(7, url.length);
 	} else if (url.slice(0, 8) == 'https://') {
-		url = url.slice(7, url.length);
+		url = url.slice(8, url.length);
 	}
 	return url;
 }
@@ -291,6 +343,7 @@ function slicePrefixAndSufix(url) {
 function getEdges_(tabTree, parentUrl) {
 	var xhr = new XMLHttpRequest();
 	parentUrlStripped = slicePrefixAndSufix(parentUrl);
+	parentUrlStripped = extractDomain_(parentUrlStripped);
 	var targetUrl = 'http://seeasy.herokuapp.com/rec/edges/' + parentUrlStripped + '{notRelevant/';
 	xhr.open("GET", targetUrl, true);
 	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
@@ -301,11 +354,31 @@ function getEdges_(tabTree, parentUrl) {
 			if (response.length > 0) {
 				var projectedUrl = response[0].fields.son;
 				var projectedVisit = new node(projectedUrl, parentUrl, projectedUrl);
-				tabTree.push(projectedVisit);
+				//tabTree.push(projectedVisit);
+				addEdgeIfRelevant(tabTree, projectedVisit);
 			}
 	    }
 	}
 	xhr.send();
+}
+
+function addEdgeIfRelevant(tabTree, newVisit) {
+	var arrayContainsOppositeDirection = false;
+	var sitePathAlreadyTraversed = false;
+	var falsePath = false;
+	tabTree.forEach(function (record) {
+		if (record.name === newVisit.parent && record.parent === newVisit.name) {
+			arrayContainsOppositeDirection = true;
+		} else if (record.name === newVisit.name && record.parent === newVisit.parent) {
+			sitePathAlreadyTraversed = true;
+		} else if (newVisit.name === newVisit.parent) {
+			falsePath = true;
+		}
+	});
+
+	if (!arrayContainsOppositeDirection && !sitePathAlreadyTraversed && !falsePath) {
+  		tabTree.push(newVisit);
+	}
 }
 
 function extractDomain_(url) {
