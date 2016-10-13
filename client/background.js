@@ -255,8 +255,8 @@ function onMessageListener_ (message, sender, sendResponse) {
 		sendResponse({});
 	} else if (message.type === 'getRecommendations') {
 		chrome.storage.sync.get({'tabMap': {},'previousUrls': {}}, function (storage) {
-			var mappedTo = tabMap[activeTab];
-			lastUrl = previousUrls["p" + mappedTo];
+			var mappedTo = storage.tabMap[activeTab];
+			lastUrl = storage.previousUrls["p" + mappedTo];
 			if (lastUrl) {
 				var urlDomain = extractDomain_(lastUrl);
 				var xhr = new XMLHttpRequest();
