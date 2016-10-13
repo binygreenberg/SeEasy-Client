@@ -141,6 +141,9 @@ function setListRoot(flare){
   }
 
   function color(d) {
+    if (d.type === "future") {
+      return '#ff4dff';
+    }
     return d._children ? "#3182bd" : d.children ? "#c6dbef" : "#fd8d3c";
   }
 

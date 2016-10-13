@@ -353,7 +353,7 @@ function getEdges_(tabTree, parentUrl) {
 			var response = JSON.parse(xhr.responseText);
 			if (response.length > 0) {
 				var projectedUrl = response[0].fields.son;
-				var projectedVisit = new node(projectedUrl, parentUrl, projectedUrl);
+				var projectedVisit = new node(projectedUrl, parentUrl, projectedUrl, "future");
 				//tabTree.push(projectedVisit);
 				addEdgeIfRelevant(tabTree, projectedVisit);
 			}
