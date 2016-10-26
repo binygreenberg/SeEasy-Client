@@ -69,12 +69,42 @@
 		background-color: white;
 		border:2px solid yellow;
 	}
+
+	#help_info {
+		display: none;
+		margin-left: 10px;
+	}
 	
 </style>
 <button id='tree' type="button">Tree Graph</button>
 <button id='graph' type="button">List Graph</button>
 <button id='radial' type="button">List Graph</button>
 <button id='help_button' type="button">Need Help?</button>
+<div id='help_info'>
+	<h3>Welcome to Seeasy!</h3>
+	<p>
+		Our application is designed to do 2 main things that will make your browsing experience that much more enjoyable:
+		<ol>
+			<li>We show you your browsing history in a user friendly way!
+				<p>
+					There are 3 different ways you can view your browsing history, each using a different type of graph, but the idea in all of them is essentially the same. To switch between the different graphs there are 3 buttons at the top of the page. Choose whichever one is most pleasing to your eye! <br> Now that you have chosen one, we'll explain how to read the graph. 
+					<ul>
+						<li>Blue nodes represent sites that you have been to that led you to other sites.</li>
+						<li>Red nodes represent sites that didn't lead to other sites, either because you are on that site right now, or because it led to a dead end.</li>
+						<li>Note: if you open new tab from a link in the tab that you are currently browsing on, the 2 tabs will share the same graph and both add to it!</li>
+					  	<li>Finally, the Purple nodes bring us to the second purpose of our app:</li>
+					</ul>
+				</p>
+			</li>
+			<li>We help you find more interesting sites to browse to!
+				<p>
+					The purple nodes represent sites that you have not been to yet but, based on what other vistors to their parent nodes site have done, we believe that the site in the purple node may interest you. If you are interested in checking out that site or any of the other sites in the graph simply click on the node and the site will open in a new tab! <br> Finally, we have a box at the bottom of the page that recommends 3 sites for you to browse to, based on sites that we have found a lot of users like to browse to after being on sites like the site you are currently on.
+				</p>
+			</li>
+		</ol>
+	</p>
+	<h5>So that's it! Happy Browsing!</h5>
+</div>
 <div id='recommendationsContainer' style="background-color:#c6dbef">
 	<h3 style="font-family: cursive">If you're on this page, you might wanna check out these as well:</h3>
 	<ul>
