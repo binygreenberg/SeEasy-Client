@@ -56,7 +56,7 @@
 		color: black;
 	}
 
-	button {
+	.display_type_button {
 		border-radius: 5px;
 		font-family: cursive;
 		background-color:#80ffbf;
@@ -76,9 +76,9 @@
 	}
 	
 </style>
-<button id='tree' type="button">Tree Graph</button>
-<button id='graph' type="button">List Graph</button>
-<button id='radial' type="button">List Graph</button>
+<button id='tree' type="button" class="display_type_button">Tree Graph</button>
+<button id='graph' type="button" class="display_type_button">List Graph</button>
+<button id='radial' type="button" class="display_type_button">List Graph</button>
 <button id='help_button' type="button">Need Help?</button>
 <div id='help_info'>
 	<h3>Welcome to Seeasy!</h3>
@@ -108,9 +108,9 @@
 <div id='recommendationsContainer' style="background-color:#c6dbef">
 	<h3 style="font-family: cursive">If you're on this page, you might wanna check out these as well:</h3>
 	<ul>
-		<li><a id='firstRecommendation' href="html_images.asp">HTML Images</a></li>
-	    <li><a id='secondRecommendation' href="html_images.asp">HTML Images</a></li>
-	    <li><a id='thirdRecommendation' href="html_images.asp">HTML Images</a></li>
+		<li><button id='firstRecommendation' type="button" class='recommendation_button'>Sorry, we cound not recommend anything for this site</button></li>
+	    <li><button id='secondRecommendation' type="button" class='recommendation_button'>Sorry, we cound not recommend anything for this site</button></li>
+	    <li><button id='thirdRecommendation' type="button" class='recommendation_button'>Sorry, we cound not recommend anything for this site</button></li>
 	</ul>
 </div>
 

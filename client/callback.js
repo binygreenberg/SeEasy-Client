@@ -45,8 +45,7 @@ function show(functionType){
 			for (var key in data) {
 	       		if (data.hasOwnProperty(key)) {
 	          		console.log('return value from GET' ,data[key].pk, data[key].fields.category);
-	       			document.getElementsByTagName('a')[index].setAttribute("href", data[key].pk);
-	       			document.getElementsByTagName('a')[index++].innerHTML = data[key].pk;
+	       			document.getElementsByClassName('recommendation_button')[index++].innerHTML = data[key].pk;
 	       		}
 	    	}
 		} 
@@ -75,5 +74,13 @@ document.addEventListener('DOMContentLoaded', function () {
 	document.getElementById('graph').addEventListener('click', function(){show(setListRoot)});
 	document.getElementById('radial').addEventListener('click', function(){show(setRadialRoot)});
 	document.getElementById('help_button').addEventListener('click', function(){show_instructions()});
+	document.getElementById('firstRecommendation').addEventListener('click', function(){linkClicked('firstRecommendation')});
+	document.getElementById('secondRecommendation').addEventListener('click', function(){linkClicked('secondRecommendation')});
+	document.getElementById('thirdRecommendation').addEventListener('click', function(){linkClicked('thirdRecommendation')});
 });
+
+function linkClicked(elemId) {
+	var elem = document.getElementById(elemId);
+	chrome.tabs.create( { url: 'http://' + elem.innerHTML} );
+}
 
