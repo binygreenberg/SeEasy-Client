@@ -129,7 +129,7 @@ function update(source) {
 }
 
 function openUrlClick(d){
-    chrome.tabs.create( { url: d.name} );
+    chrome.tabs.create( { url: 'http://' + d.name} );
 }
 
 // Toggle children on click.
