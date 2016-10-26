@@ -9,6 +9,7 @@ var tabMap = {};
 var dontAddTheseUrl = [/chrome:\/\/newtab/,/http:\/\/localhost/,/chrome:\/\/extensions/];
 var lastUrl = "";
 var newTabActivated = false;
+var urlChanged = false;
 
 var typeEnum = {
 	RECOMMENDED: "recommended",
@@ -202,9 +203,12 @@ function addVisitToTree(tabId, changeInfo, tab, tabTree, lastUrlVisitedOnThisTab
 }
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  if (changeInfo.url && checkShouldAddUrl(changeInfo.url) && !isNewTab) {
-  	postVisitedURLs_(changeInfo.url);
-  	lastUrl = changeInfo.url;
+  if (changeInfo.url) {
+  	urlChanged = true;
+  } else if (urlChanged && tab.status === 'complete' && tab.active && checkShouldAddUrl(tab.url) && !isNewTab) {
+  	urlChanged = false;
+  	postVisitedURLs_(tab.url);
+  	lastUrl = tab.url;
   	if (!currentTabTree || !previousUrls || activeTab !== tabId) {
   		chrome.storage.sync.get({'tabMap': {}}, function (storage) {
 	  		var mappedTab = storage.tabMap[tabId];
@@ -216,10 +220,10 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 	    		//console.log("Had to reload the data from scratch and it is: " + JSON.stringify(currentTabTree));
 	    		activeTab = tabId;
 	    		var lastUrlVisitedOnThisTab = previousUrls["p" + tabId.toString()] || "null";
-	    		addVisitToTree(tabId, changeInfo, tab, currentTabTree, lastUrlVisitedOnThisTab);
+	    		addVisitToTree(tabId, tab, tab, currentTabTree, lastUrlVisitedOnThisTab);
 	    		//send the edge to server
 	    		if (lastUrlVisitedOnThisTab){
-	    			postEdges_(changeInfo.url,lastUrlVisitedOnThisTab);
+	    			postEdges_(lastUrl,lastUrlVisitedOnThisTab);
 	    		}
 	    	});
 	    });
@@ -227,9 +231,9 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   		console.log("Data was already loaded and it is:" + JSON.stringify(currentTabTree));
   		var lastUrlVisitedOnThisTab = previousUrls["p" + tabId.toString()] || "null";
   		if (lastUrlVisitedOnThisTab){
-			postEdges_(changeInfo.url,lastUrlVisitedOnThisTab);
+			postEdges_(lastUrl,lastUrlVisitedOnThisTab);
 		}
-		addVisitToTree(tabId, changeInfo, tab, currentTabTree, lastUrlVisitedOnThisTab);
+		addVisitToTree(tabId, tab, tab, currentTabTree, lastUrlVisitedOnThisTab);
   	}
   }
 });
