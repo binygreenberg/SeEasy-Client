@@ -14,7 +14,7 @@ function show(functionType){
 			map[node.name] = node;
 			return map;
 		}, {});
-		console.log(dataMap);
+		console.log('dataMap' + dataMap);
 		// create the tree array
 		var treeData = [];
 		data.forEach(function(node) {
