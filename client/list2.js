@@ -125,7 +125,7 @@ function setListRoot(flare){
   }
 
   function openUrlClick(d){
-      chrome.tabs.create( { url: 'http://' + d.name} );
+      chrome.tabs.create( { url: d.name} );
   }
 
   // Toggle children on click.

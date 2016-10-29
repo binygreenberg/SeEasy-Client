@@ -1,27 +1,9 @@
 
-// d3.json("/mbostock/raw/4063550/flare.json", function(error, flare) {
-//   if (error) throw error;
-
-//   root = flare;
-//   root.x0 = height / 2;
-//   root.y0 = 0;
-
-//   function collapse(d) {
-//     if (d.children) {
-//       d._children = d.children;
-//       d._children.forEach(collapse);
-//       d.children = null;
-//     }
-//   }
-
-//   update(root);
-// });
-
 function setTreeRoot(flare){
 
 d3.select("svg").remove();
 
-var margin = {top: 20, right: 120, bottom: 20, left: 120},
+var margin = {top: 20, right: 80, bottom: 20, left: 80},
     width = 800 - margin.right - margin.left,
     height = 600 - margin.top - margin.bottom;
 
@@ -68,8 +50,9 @@ function update(source) {
       .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
       .attr("dy", ".35em")
       .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
-      .text(function(d) { return d.name; })
-      .style("fill-opacity", 1e-6);
+      .text(function(d) { return d.title; })
+      .style("fill-opacity", 1e-6)
+      .on("click",openUrlClick);
 
   // Transition nodes to their new position.
   var nodeUpdate = node.transition()
@@ -128,6 +111,10 @@ function update(source) {
   });
 }
 
+function openUrlClick(d){
+      chrome.tabs.create( { url: d.name} );
+  }
+
 // Toggle children on click.
 function click(d) {
   if (d.children) {
@@ -143,7 +130,7 @@ function click(d) {
 
   root = flare;
   root.x0 = height / 2;
-  root.y0 = 0;
+  root.y0 = 50;
 
   function collapse(d) {
     if (d.children) {
@@ -153,7 +140,7 @@ function click(d) {
     }
   }
 
-  root.children.forEach(collapse);
+  //root.children.forEach(collapse);
   update(root);
 
 }
