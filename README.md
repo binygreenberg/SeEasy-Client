@@ -1,5 +1,5 @@
 # SeEasy-Client
-A chrome browser extention  
+A chrome browser extension  
 uses d3.js to show a graph of your browsing history  
 to intall:
 - clone the repo
