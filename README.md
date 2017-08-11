@@ -1,2 +1,2 @@
 # SeEasy-Client
-A chrome 
+A chrome browser plugin
